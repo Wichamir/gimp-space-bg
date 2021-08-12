@@ -10,3 +10,8 @@ of the generated images into a chosen directory as .png files.
 1. Copy space-bg folder (the one containing space-bg.py) into your GIMP plug-ins directory.
 2. Run GIMP.
 3. If everything goes well you should find "Space Background..." entry in Filters/Render
+
+## Examples
+![](examples/example1.png "")
+![](examples/example2.png "")
+![](examples/example3.png "")
