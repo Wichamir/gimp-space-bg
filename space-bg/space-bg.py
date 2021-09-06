@@ -21,8 +21,9 @@ def space_bg(
         width, height,
         mask, max_big_stars_count,
         mist_count, mist_size, hue_variation,
-        supernova, plasma,
-        image_count, export, output_directory, filename):
+        supernova, plasma, image_count,
+        export, image_format, #compression_level,
+        output_directory, filename):
     for i in range(image_count):
         try:
             # initial variables
@@ -32,7 +33,7 @@ def space_bg(
             # create an image, add initial layer
             image_space = pdb.gimp_image_new(width, height, RGB)
             layer_stars = pdb.gimp_layer_new(
-                image_space, width, height, RGBA_IMAGE, "Stars",
+                image_space, width, height, RGB_IMAGE, "Stars",
                 100, LAYER_MODE_NORMAL_LEGACY)
             pdb.gimp_image_insert_layer(image_space, layer_stars, None, -1)
             pdb.gimp_display_new(image_space)
@@ -138,13 +139,29 @@ def space_bg(
                 pdb.plug_in_plasma(image_space, layer_plasma, generate_seed(), 3)
                 pdb.plug_in_blur(image_space, layer_plasma)
 
-            # export to png
+            # export image
             if export:
-                output_path = output_directory + "/" + filename + str(i) + ".png"
+                output_path = output_directory + "/" + filename + str(i) + "."
                 layer_export = pdb.gimp_image_merge_visible_layers(
                     image_space, CLIP_TO_IMAGE)
-                pdb.file_png_save_defaults(
-                    image_space, layer_export, output_path, output_path)
+                if image_format == 0:
+                    output_path += "png"
+                    #compression = int(float(compression_level) / 100.0 * 9.0)
+                    pdb.file_png_save(
+                        image_space, layer_export, output_path, output_path,
+                        True, 9, True, False, False, True, True)
+                elif image_format == 1:
+                    output_path += "jpg"
+                    #quality = 1.0 - float(compression_level) / 100.0
+                    pdb.file_jpeg_save(
+                        image_space, layer_export, output_path, output_path,
+                        0.9, 0.0, True, True, "", 2, True, 0, 0)
+                elif image_format == 2:
+                    output_path += "webp"
+                    #quality = 100.0 - float(compression_level) / 100.0
+                    pdb.file_webp_save(
+                        image_space, layer_export, output_path, output_path,
+                        1, True, 100.0, 0.0, False, False, False, 0, True, True, True, 0, 0)
         except Exception as error:
             pdb.gimp_message("Unexpected error: " + str(error))
 
@@ -160,19 +177,21 @@ register(
             "<Image>/Filters/Render/Space Background...",
             "*",
             [
-                (PF_INT, "Width", "Image width", 4096),
-                (PF_INT, "Height", "Image height", 2304),
-                (PF_BOOL, "Mask", "Mask stars?", True),
-                (PF_INT, "BigStars", "Max number of bigger stars", 20),
-                (PF_INT, "Layers", "Number of mist layers", 3),
-                (PF_SLIDER, "Size", "Mist size", 5.0, (0.1, 16.0, 0.001)),
-                (PF_SLIDER, "Variation", "Hue variation", 30, (0.0, 180.0, 0.001)),
-                (PF_BOOL, "Supernova", "Add supernova?", False),
-                (PF_BOOL, "Plasma", "Generate plasma?", True),
-                (PF_INT, "Images", "Number of images to generate", 1),
-                (PF_BOOL, "Export", "Export?", False),
-                (PF_DIRNAME, "OutputDirectory", "Output directory (if exporting)", ""),
-                (PF_STRING, "Filename", "Filename (if exporting)", "space"),
+                (PF_INT, "width", "Image width", 1920),
+                (PF_INT, "height", "Image height", 1080),
+                (PF_BOOL, "mask", "Mask stars?", True),
+                (PF_INT, "big-stars", "Max number of bigger stars", 20),
+                (PF_INT, "layers", "Number of mist layers", 3),
+                (PF_SLIDER, "size", "Mist size", 5.0, (0.1, 16.0, 0.001)),
+                (PF_SLIDER, "variation", "Hue variation", 30.0, (0.0, 180.0, 0.001)),
+                (PF_BOOL, "supernova", "Add supernova?", False),
+                (PF_BOOL, "plasma", "Generate plasma?", True),
+                (PF_INT, "images", "Number of images to generate", 1),
+                (PF_BOOL, "export", "Export? (all of the settings below are for exporting)", False),
+                (PF_OPTION, "image-format", "Image format", 0, ("png", "jpg", "webp")),
+                #(PF_SLIDER, "compression", "Compression level", 20, (0, 100, 1)),
+                (PF_DIRNAME, "output-directory", "Output directory", ""),
+                (PF_STRING, "filename", "Filename", "space"),
             ],
             [],
             space_bg
